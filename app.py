@@ -17,18 +17,18 @@ if "click_upgrades" not in st.session_state:
 if st.button(f"🚑 Patienten retten (+{st.session_state.click_value})"):
     st.session_state.points += st.session_state.click_value
 
-# Anzeige
-st.metric("👥 Gerettete Patienten", st.session_state.points)
-st.metric("🖱️ Patienten pro Klick", st.session_state.click_value)
+# Anzeige – nur ganze Zahlen
+st.metric("👥 Gerettete Patienten", int(st.session_state.points))
+st.metric("🖱️ Patienten pro Klick", int(st.session_state.click_value))
 
 # Upgrade-Bereich
 st.subheader("⬆️ Klickkraft verbessern")
 st.write(f"Aktuelle Stufe: {st.session_state.click_upgrades}")
-st.write(f"Kosten: {st.session_state.upgrade_cost} Patienten")
+st.write(f"Kosten: {int(st.session_state.upgrade_cost)} Patienten")
 
 if st.button("📈 Upgrade kaufen"):
     if st.session_state.points >= st.session_state.upgrade_cost:
-        st.session_state.points -= st.session_state.upgrade_cost
+        st.session_state.points -= int(st.session_state.upgrade_cost)
         st.session_state.click_value += 1
         st.session_state.click_upgrades += 1
         st.session_state.upgrade_cost = int(st.session_state.upgrade_cost * 1.5)
