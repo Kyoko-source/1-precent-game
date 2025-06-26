@@ -20,7 +20,7 @@ if "helpers" not in st.session_state:
         "🤖 Medizinroboter": {"count": 0, "cps": 20.0, "cost": 1000},
     }
 
-# Automatischer Punkte-Zuwachs berechnen
+# Punkte automatisch berechnen (basierend auf Zeit seit letztem Klick)
 now = time.time()
 elapsed = now - st.session_state.last_update
 st.session_state.points += elapsed * st.session_state.cps
@@ -32,13 +32,13 @@ if st.button("🚑 Krankenwagen losschicken"):
 
 # Statusanzeigen
 st.metric("👥 Gerettete Patienten", int(st.session_state.points))
-st.metric("⏱️ Patienten pro Sekunde", round(st.session_state.cps, 2))
+st.metric("⏱️ Patienten/Sekunde", round(st.session_state.cps, 2))
 
 st.subheader("🩺 Medizinische Unterstützung kaufen")
 
-# Autoklicker-Kauf-Logik
+# Autoklicker kaufen
 for name, data in st.session_state.helpers.items():
-    col1, col2, col3 = st.columns([4, 2, 2])
+    col1, col2 = st.columns([4, 2])
     with col1:
         st.write(f"{name} (x{data['count']}) – {data['cost']} Patienten")
     with col2:
@@ -49,13 +49,13 @@ for name, data in st.session_state.helpers.items():
                 st.session_state.cps += data["cps"]
                 data["cost"] = int(data["cost"] * 1.15)
 
-# Spiel zurücksetzen
+# Manuelles Reset
 st.markdown("---")
 if st.button("🔁 Spiel zurücksetzen"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.experimental_rerun()
 
-# 🔄 Auto-Refresh alle 1 Sekunde (damit Autoklicker wirken)
-time.sleep(1)
-st.experimental_rerun()
+# ⚠️ Optional: "Pseudo-Autorefresh" Knopf zum Erzwingen
+if st.button("🔄 Seite aktualisieren"):
+    st.experimental_rerun()
