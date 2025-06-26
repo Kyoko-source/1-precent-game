@@ -1,45 +1,58 @@
 import streamlit as st
-import random
+import time
 
-st.set_page_config(page_title="Das 1% Spiel", page_icon="🎯", layout="centered")
-st.title("🎯 Das 1% Spiel")
+st.set_page_config(page_title="🚑 Krankenhaus Klicker", layout="centered")
+st.title("🚑 Krankenhaus Klicker")
 
 # Session State initialisieren
-if "counter" not in st.session_state:
-    st.session_state.counter = 0
-if "chance" not in st.session_state:
-    st.session_state.chance = 1
-if "highscore" not in st.session_state:
-    st.session_state.highscore = 0
+if "points" not in st.session_state:
+    st.session_state.points = 0.0
+if "cps" not in st.session_state:
+    st.session_state.cps = 0.0
+if "last_update" not in st.session_state:
+    st.session_state.last_update = time.time()
+if "helpers" not in st.session_state:
+    st.session_state.helpers = {
+        "👩‍⚕️ Pflegekraft": {"count": 0, "cps": 0.2, "cost": 10},
+        "💉 Impfteam": {"count": 0, "cps": 1.0, "cost": 50},
+        "🚁 Notfallhelikopter": {"count": 0, "cps": 5.0, "cost": 200},
+        "🧪 Laborteam": {"count": 0, "cps": 10.0, "cost": 500},
+        "🤖 Medizinroboter": {"count": 0, "cps": 20.0, "cost": 1000},
+    }
 
-st.markdown("**Regeln:** Mit jedem Klick steigt die Chance um 1%, dass dein Zähler auf 0 zurückgesetzt wird. Schaffst du es, den höchsten Counter zu erreichen?")
+# Zeit seit letztem Update berechnen
+now = time.time()
+elapsed = now - st.session_state.last_update
+st.session_state.points += elapsed * st.session_state.cps
+st.session_state.last_update = now
 
-# Klick-Button
-if st.button("Klick mich!"):
-    reset = random.randint(1, 100) <= st.session_state.chance
-    if reset:
-        st.warning(f"Zurückgesetzt bei {st.session_state.counter} Klicks! 😢")
-        # Highscore prüfen
-        if st.session_state.counter > st.session_state.highscore:
-            st.session_state.highscore = st.session_state.counter
-            st.success("🎉 Neuer Highscore!")
-        st.session_state.counter = 0
-        st.session_state.chance = 1
-    else:
-        st.session_state.counter += 1
-        st.session_state.chance += 1
+# Button zum "Klicken"
+if st.button("🚑 Krankenwagen losschicken"):
+    st.session_state.points += 1
 
-# Highscore prüfen auch ohne Reset
-if st.session_state.counter > st.session_state.highscore:
-    st.session_state.highscore = st.session_state.counter
+# Anzeigen aktueller Status
+st.metric(label="👥 Gerettete Patienten", value=int(st.session_state.points))
+st.metric(label="⏱️ Patienten/Sekunde", value=round(st.session_state.cps, 2))
 
-# Anzeigen der Werte
-st.metric(label="Aktueller Counter", value=st.session_state.counter)
-st.metric(label="Zurücksetz-Chance", value=f"{st.session_state.chance}%")
-st.metric(label="🏆 Highscore", value=st.session_state.highscore)
+st.subheader("🩺 Medizinische Unterstützung kaufen")
 
-# Manuelles Zurücksetzen
-if st.button("Zurücksetzen"):
-    st.session_state.counter = 0
-    st.session_state.chance = 1
-    st.success("Spiel wurde zurückgesetzt.")
+# Helfer kaufen
+for name, data in st.session_state.helpers.items():
+    col1, col2, col3 = st.columns([4, 2, 2])
+    with col1:
+        st.write(f"{name} (x{data['count']}) – {data['cost']} Patienten")
+    with col2:
+        if st.button(f"Kaufen {name}", key=name):
+            if st.session_state.points >= data["cost"]:
+                st.session_state.points -= data["cost"]
+                data["count"] += 1
+                st.session_state.cps += data["cps"]
+                data["cost"] = int(data["cost"] * 1.15)  # Preis steigt leicht
+
+# Spiel zurücksetzen
+st.markdown("---")
+if st.button("🔁 Spiel zurücksetzen"):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.experimental_rerun()
+
