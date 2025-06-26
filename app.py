@@ -4,7 +4,7 @@ import time
 st.set_page_config(page_title="🚑 Krankenhaus Klicker", layout="centered")
 st.title("🚑 Krankenhaus Klicker")
 
-# Session State initialisieren
+# Initialisierung
 if "points" not in st.session_state:
     st.session_state.points = 0.0
 if "cps" not in st.session_state:
@@ -20,23 +20,23 @@ if "helpers" not in st.session_state:
         "🤖 Medizinroboter": {"count": 0, "cps": 20.0, "cost": 1000},
     }
 
-# Zeit seit letztem Update berechnen
+# Automatischer Punkte-Zuwachs berechnen
 now = time.time()
 elapsed = now - st.session_state.last_update
 st.session_state.points += elapsed * st.session_state.cps
 st.session_state.last_update = now
 
-# Button zum "Klicken"
+# Klick-Button
 if st.button("🚑 Krankenwagen losschicken"):
     st.session_state.points += 1
 
-# Anzeigen aktueller Status
-st.metric(label="👥 Gerettete Patienten", value=int(st.session_state.points))
-st.metric(label="⏱️ Patienten/Sekunde", value=round(st.session_state.cps, 2))
+# Statusanzeigen
+st.metric("👥 Gerettete Patienten", int(st.session_state.points))
+st.metric("⏱️ Patienten pro Sekunde", round(st.session_state.cps, 2))
 
 st.subheader("🩺 Medizinische Unterstützung kaufen")
 
-# Helfer kaufen
+# Autoklicker-Kauf-Logik
 for name, data in st.session_state.helpers.items():
     col1, col2, col3 = st.columns([4, 2, 2])
     with col1:
@@ -47,7 +47,7 @@ for name, data in st.session_state.helpers.items():
                 st.session_state.points -= data["cost"]
                 data["count"] += 1
                 st.session_state.cps += data["cps"]
-                data["cost"] = int(data["cost"] * 1.15)  # Preis steigt leicht
+                data["cost"] = int(data["cost"] * 1.15)
 
 # Spiel zurücksetzen
 st.markdown("---")
@@ -56,3 +56,6 @@ if st.button("🔁 Spiel zurücksetzen"):
         del st.session_state[key]
     st.experimental_rerun()
 
+# 🔄 Auto-Refresh alle 1 Sekunde (damit Autoklicker wirken)
+time.sleep(1)
+st.experimental_rerun()
