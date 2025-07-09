@@ -11,7 +11,7 @@ SYMBOLS = [
     ("💉", 6, 1.3, 4.0),      # Spritze
     ("🩺", 5, 1.1, 3.5),      # Stethoskop
     ("🚨", 4, 1.4, 4.8),      # Blaulicht
-    ("👩‍🚒", 3, 1.6, 5.5),    # Rettungssanitäter
+    ("👩‍🚒", 3, 1.6, 5.5),   # Rettungssanitäter
     ("🩹", 3, 1.2, 4.2),      # Verband
     ("📟", 2, 1.1, 3.8),      # Pager
 ]
@@ -68,31 +68,14 @@ def calculate_win(bet):
 def spin_slots():
     st.session_state.reels = [random.choice(weighted_reel) for _ in range(REELS)]
 
-# Styling mit vollem Hintergrund und ohne Glanzeffekt
+# Styling mit Farbverläufen, Schatten, Glow & Animationen
 st.markdown("""
 <style>
-    body {
-        background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        margin: 0;
-        padding: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .main-container {
-        background: #272727;
-        max-width: 720px;
-        margin: 40px auto 60px auto;
-        padding: 25px 40px 40px 40px;
-        border-radius: 15px;
-        box-shadow: 0 0 20px 5px rgba(183, 28, 28, 0.7);
-        color: #f5f5f5;
-    }
     .title {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         font-size: 3.5em;
         font-weight: 900;
-        color: #f44336;
+        color: #b71c1c;
         text-align: center;
         margin-bottom: 10px;
         text-shadow: 2px 2px 5px #7f0000;
@@ -100,7 +83,7 @@ st.markdown("""
     .coins {
         font-size: 1.6em;
         font-weight: bold;
-        color: #e53935;
+        color: #d32f2f;
         text-align: center;
         margin-bottom: 30px;
         text-shadow: 1px 1px 3px #9e0000;
@@ -108,10 +91,11 @@ st.markdown("""
     .message {
         font-size: 1.6em;
         font-weight: 800;
-        color: #ef5350;
+        color: #b71c1c;
         text-align: center;
-        margin-top: 10px;
+        margin-top: 10px; /* Weniger Abstand */
         min-height: 2.5em;
+        text-shadow: 1px 1px 3px #7f0000;
         line-height: 1.2;
     }
     table {
@@ -123,13 +107,12 @@ st.markdown("""
         box-shadow: 0 4px 8px rgba(183, 28, 28, 0.5);
         border-radius: 8px;
         overflow: hidden;
-        background: #fff;
-        color: #333;
     }
     th, td {
         border: 1px solid #b71c1c;
         padding: 12px 18px;
         text-align: center;
+        background: linear-gradient(90deg, #ffebee, #ffcdd2);
     }
     th {
         background-color: #b71c1c;
@@ -137,9 +120,23 @@ st.markdown("""
         font-size: 1.1em;
     }
     tr:nth-child(even) td {
-        background: #fce4ec;
+        background: linear-gradient(90deg, #ffcdd2, #ffebee);
     }
-    /* Münzanimation */
+    /* Glitzer-Glow für Gewinn-Symbole */
+    .glow {
+        text-shadow:
+            0 0 5px #ff1744,
+            0 0 10px #ff1744,
+            0 0 20px #ff1744,
+            0 0 30px #ff1744,
+            0 0 40px #f50057;
+        animation: flicker 1.5s infinite alternate;
+    }
+    @keyframes flicker {
+        0% { text-shadow: 0 0 5px #ff1744, 0 0 10px #ff1744, 0 0 20px #ff1744, 0 0 30px #ff1744, 0 0 40px #f50057; }
+        100% { text-shadow: 0 0 10px #ff1744, 0 0 20px #ff1744, 0 0 30px #ff1744, 0 0 40px #f50057, 0 0 50px #ff1744; }
+    }
+    /* Animierte Münzen */
     @keyframes coin-fall {
         0% {transform: translateY(-100px) rotate(0deg); opacity: 1;}
         100% {transform: translateY(200px) rotate(360deg); opacity: 0;}
@@ -152,20 +149,8 @@ st.markdown("""
         pointer-events: none;
         z-index: 9999;
     }
-    /* Reels Styling */
-    .reels {
-        font-size: 5em;
-        text-align: center;
-        user-select: none;
-        letter-spacing: 1rem;
-        margin-bottom: 0.4rem;
-        color: #f44336;
-        text-shadow: 1px 1px 2px #7f0000;
-    }
 </style>
 """, unsafe_allow_html=True)
-
-st.markdown('<div class="main-container">', unsafe_allow_html=True)
 
 st.markdown('<div class="title">🚑 Rettungsdienst Slotmaschine 🚑</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="coins">💰 Coins: {st.session_state.coins}</div>', unsafe_allow_html=True)
@@ -174,9 +159,12 @@ bet = st.slider("Wähle deinen Einsatz (Coins):", min_value=10, max_value=min(20
 
 spin_box = st.empty()
 
-def render_reels(reels):
-    html_reels = " ".join(reels)
-    spin_box.markdown(f"<div class='reels'>{html_reels}</div>", unsafe_allow_html=True)
+def render_reels(reels, glow=False):
+    if glow:
+        html_reels = " ".join([f'<span class="glow">{r}</span>' for r in reels])
+    else:
+        html_reels = " ".join(reels)
+    spin_box.markdown(f"<div style='font-size:5em; text-align:center;'>{html_reels}</div>", unsafe_allow_html=True)
 
 def show_coins_animation():
     for i in range(10):
@@ -200,7 +188,7 @@ if st.button("🎰 Drehen!"):
         win, msg = calculate_win(bet)
         st.session_state.win = win
         st.session_state.message = msg
-        render_reels(st.session_state.reels)
+        render_reels(st.session_state.reels, glow=(win > 0))
         st.markdown(f'<div class="message">{st.session_state.message}</div>', unsafe_allow_html=True)
         if win > 0:
             st.session_state.coins += win
@@ -233,5 +221,3 @@ for sym, _, val2, val3 in SYMBOLS:
 table_html += "</tbody></table>"
 
 st.markdown(table_html, unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
