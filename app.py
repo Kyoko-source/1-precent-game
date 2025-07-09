@@ -4,7 +4,6 @@ import random
 import time
 
 # Symbole mit Gewicht und Gewinnfaktoren (Thema Rettungsdienst)
-SYMBOLS = [
    SYMBOLS = [
     ("❤️", 10, 1.8, 7.0),
     ("🚑", 8, 2.8, 9.0),
