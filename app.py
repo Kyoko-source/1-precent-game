@@ -28,6 +28,7 @@ defaults = {
     "reels": ["❓"]*REELS,
     "message": "",
     "win": 0,
+    "jackpot": 0,           # Jackpot Startwert
 }
 
 for k,v in defaults.items():
@@ -51,8 +52,11 @@ def calculate_win(bet):
     unique = set(reels)
     if len(unique) == 1:
         val2, val3 = get_symbol_info(reels[0])
-        win = int(bet * val3)
-        message = f"🎉 Jackpot! 3x {reels[0]}! Du gewinnst {win} Coins!"
+        # Jackpot-Gewinn
+        jackpot_win = st.session_state.jackpot
+        win = int(bet * val3) + jackpot_win
+        message = f"🎉 Jackpot! 3x {reels[0]}! Du gewinnst {int(bet * val3)} Coins + Jackpot {jackpot_win} Coins = {win} Coins!"
+        st.session_state.jackpot = 0  # Jackpot zurücksetzen
     elif len(unique) == 2:
         for sym in unique:
             if reels.count(sym) == 2:
@@ -87,6 +91,14 @@ st.markdown("""
         text-align: center;
         margin-bottom: 30px;
         text-shadow: 1px 1px 3px #9e0000;
+    }
+    .jackpot {
+        font-size: 1.3em;
+        font-weight: 700;
+        color: #ff1744;
+        text-align: center;
+        margin-bottom: 20px;
+        text-shadow: 1px 1px 4px #b71c1c;
     }
     .message {
         font-size: 1.6em;
@@ -154,6 +166,7 @@ st.markdown("""
 
 st.markdown('<div class="title">🚑 Rettungsdienst Slotmaschine 🚑</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="coins">💰 Coins: {st.session_state.coins}</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="jackpot">🎰 Jackpot: {st.session_state.jackpot} Coins</div>', unsafe_allow_html=True)
 
 bet = st.slider("Wähle deinen Einsatz (Coins):", min_value=10, max_value=min(200, st.session_state.coins), step=10)
 
@@ -179,30 +192,29 @@ if st.button("🎰 Drehen!"):
         st.warning("⚠️ Du hast nicht genug Coins für diesen Einsatz!")
     else:
         st.session_state.coins -= bet
+
         # Dreh-Animation
         for _ in range(10):
             random_reels = [random.choice(weighted_reel) for _ in range(REELS)]
             render_reels(random_reels)
             time.sleep(0.1)
+
         spin_slots()
         win, msg = calculate_win(bet)
         st.session_state.win = win
         st.session_state.message = msg
         render_reels(st.session_state.reels, glow=(win > 0))
         st.markdown(f'<div class="message">{st.session_state.message}</div>', unsafe_allow_html=True)
+
         if win > 0:
             st.session_state.coins += win
-            # Konfetti-GIF
-            st.markdown(
-                """
-                <div style="text-align:center; margin-top: -20px;">
-                    <img src="https://i.gifer.com/origin/3d/3d7a01674fef37120f47866a51248f1e.gif" width="200" />
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            # Jackpot bei Gewinn zurückgesetzt (siehe calculate_win)
             # Münzanimation
             show_coins_animation()
+        else:
+            # Bei Verlust steigt Jackpot um 10% des Einsatzes
+            st.session_state.jackpot += int(bet * 0.1)
+
 else:
     render_reels(st.session_state.reels)
     st.markdown(f'<div class="message">{st.session_state.message}</div>', unsafe_allow_html=True)
