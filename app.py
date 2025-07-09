@@ -92,7 +92,7 @@ if not st.session_state.game_active and st.session_state.turn != "end":
     bet = st.number_input("💸 Einsatz wählen", min_value=10, max_value=st.session_state.coins, step=10)
     if st.button("🎮 Spielen"):
         start_game(bet)
-        st.experimental_rerun()
+        st.experimental_rerun()  # Nur hier erlaubt
 
 # Spielanzeige
 if st.session_state.game_active or st.session_state.turn == "end":
@@ -115,12 +115,12 @@ if st.session_state.turn == "player":
         st.session_state.player_hand.append(draw_card())
         if calculate_score(st.session_state.player_hand) > 21:
             end_game()
-        st.experimental_rerun()
+        st.experimental_rerun()  # Nur hier erlaubt
 
     if col2.button("✋ Halten"):
         st.session_state.turn = "dealer"
         end_game()
-        st.experimental_rerun()
+        st.experimental_rerun()  # Nur hier erlaubt
 
 # Spielende
 if st.session_state.turn == "end":
@@ -133,4 +133,4 @@ if st.session_state.turn == "end":
         st.session_state.turn = "start"
         st.session_state.message = ""
         st.session_state.game_active = False
-        st.experimental_rerun()
+        st.experimental_rerun()  # Nur hier erlaubt
