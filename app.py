@@ -14,6 +14,7 @@ SYMBOLS = [
     ("👩‍🚒", 3, 2.8, 10.0),
     ("🩹", 3, 2.0, 8.0),
     ("📟", 2, 1.6, 7.5),
+    ("🔥", 1, 10.0, 0.0),  # Jackpot-Symbol (sehr selten!)
 ]
 
 REELS = 3
@@ -61,22 +62,27 @@ def get_symbol_info(sym):
 def calculate_win(bet):
     reels = st.session_state.reels
     unique = set(reels)
-    if len(unique) == 1:
-        val2, val3 = get_symbol_info(reels[0])
-        base_win = int(bet * val3)
+
+    # JACKPOT - 3x 🔥
+    if reels.count("🔥") == 3:
         jackpot = st.session_state.jackpot
-        total_win = base_win + jackpot
         st.session_state.jackpot = JACKPOT_START
-        message = f"🎉 JACKPOT! 3x {reels[0]}! Du gewinnst {base_win} + 🔥 {jackpot} = {total_win} Coins!"
-        return total_win, message
+        return jackpot, f"🔥🔥🔥 JACKPOT! 3x 🔥 – Du gewinnst den Jackpot: {jackpot} Coins!"
+
+    elif len(unique) == 1:
+        val2, val3 = get_symbol_info(reels[0])
+        win = int(bet * val3)
+        st.session_state.jackpot = JACKPOT_START
+        return win, f"🎉 3x {reels[0]}! Du gewinnst {win} Coins!"
+
     elif len(unique) == 2:
         for sym in unique:
             if reels.count(sym) == 2:
                 val2, _ = get_symbol_info(sym)
                 win = int(bet * val2)
-                message = f"👍 Zwei gleiche {sym}! Du gewinnst {win} Coins!"
-                return win, message
-    # Bei Verlust wächst der Jackpot
+                return win, f"👍 Zwei gleiche {sym}! Du gewinnst {win} Coins!"
+
+    # Verlust → Jackpot wächst
     st.session_state.jackpot += int(bet * 0.1)
     return 0, "😞 Kein Gewinn – der Jackpot wächst weiter!"
 
@@ -116,7 +122,7 @@ st.markdown(f'<div class="coins">💰 Coins: {st.session_state.coins}</div>', un
 
 # Jackpot Visual
 jackpot_value = st.session_state.jackpot
-flames = "🔥" * (jackpot_value // 25)
+flames = "🔥" * max(1, jackpot_value // 25)
 st.markdown(f'<div class="jackpot">{flames}<br>Jackpot: {jackpot_value} Coins</div>', unsafe_allow_html=True)
 
 # Einsatz
@@ -168,6 +174,7 @@ table_html = """
 </thead><tbody>
 """
 for sym, _, val2, val3 in SYMBOLS:
-    table_html += f"<tr><td style='font-size:1.5em;'>{sym}</td><td>{val2}×</td><td>{val3}×</td></tr>"
+    three_val = "JACKPOT!" if sym == "🔥" else f"{val3}×"
+    table_html += f"<tr><td style='font-size:1.5em;'>{sym}</td><td>{val2}×</td><td>{three_val}</td></tr>"
 table_html += "</tbody></table>"
 st.markdown(table_html, unsafe_allow_html=True)
