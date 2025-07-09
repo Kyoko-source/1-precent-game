@@ -2,19 +2,20 @@ import streamlit as st
 from datetime import datetime
 import random
 
-# Symbole & deren Gewichtung (Wahrscheinlichkeiten) - seltenere Symbole = kleinerer Wert
+# Symbole mit Gewicht (für Wahrscheinlichkeiten) und Gewinnfaktoren
+# Format: symbol, gewicht, gewinnfaktor bei 2 gleichen, bei 3 gleichen
 SYMBOLS = [
-    ("❤️", 10),   # häufig
-    ("🚑", 6),
-    ("⛑️", 4),
-    ("💉", 3),
-    ("🩺", 2)     # selten
+    ("❤️", 10, 1.2, 4.5),   # häufig, kleiner Gewinn
+    ("🚑", 6, 2.0, 6.0),    # Krankenwagen, hoher Gewinn
+    ("⛑️", 4, 1.5, 5.0),    # Helm, mittlerer Gewinn
+    ("💉", 3, 1.3, 4.0),    # Spritze
+    ("🩺", 2, 1.1, 3.5),    # Stethoskop, selten und kleinster Gewinn
 ]
+
 REELS = 3
 
-# Erstelle Reel-Liste entsprechend der Gewichte
 weighted_reel = []
-for symbol, weight in SYMBOLS:
+for symbol, weight, _, _ in SYMBOLS:
     weighted_reel.extend([symbol]*weight)
 
 defaults = {
@@ -28,7 +29,6 @@ for k,v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
-# Täglicher Coin-Bonus
 today = datetime.today().date()
 if st.session_state.last_claim != today:
     st.session_state.coins += 500
@@ -38,23 +38,32 @@ if st.session_state.last_claim != today:
 def spin_slots():
     st.session_state.reels = [random.choice(weighted_reel) for _ in range(REELS)]
 
+def get_symbol_info(sym):
+    for s, w, val2, val3 in SYMBOLS:
+        if s == sym:
+            return val2, val3
+    return 1.0, 5.0  # Default (sollte nicht vorkommen)
+
 def calculate_win(bet):
     reels = st.session_state.reels
     unique = set(reels)
     if len(unique) == 1:
-        # Jackpot: alle 3 gleich
-        win = bet * 5
+        val2, val3 = get_symbol_info(reels[0])
+        win = int(bet * val3)
         message = f"🎉 Jackpot! 3x {reels[0]}! Du gewinnst {win} Coins!"
     elif len(unique) == 2:
-        # Zweierreihe
-        win = int(bet * 1.5)
-        message = f"👍 Zwei gleiche! Du gewinnst {win} Coins!"
+        # Finde welches Symbol doppelt ist
+        for sym in unique:
+            if reels.count(sym) == 2:
+                val2, val3 = get_symbol_info(sym)
+                win = int(bet * val2)
+                message = f"👍 Zwei gleiche {sym}! Du gewinnst {win} Coins!"
+                break
     else:
         win = 0
         message = "😞 Leider kein Gewinn, versuch's nochmal!"
     return win, message
 
-# UI Styling
 st.markdown(
     """
     <style>
@@ -89,7 +98,7 @@ st.markdown(
         margin-left: auto;
         margin-right: auto;
         border-collapse: collapse;
-        width: 60%;
+        width: 75%;
         font-family: Arial, sans-serif;
     }
     th, td {
@@ -126,18 +135,18 @@ if st.button("🎰 Drehen!"):
 st.markdown(f'<div class="slots">{" ".join(st.session_state.reels)}</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="message">{st.session_state.message}</div>', unsafe_allow_html=True)
 
-# Gewinnübersicht unten
+# Gewinnübersicht Tabelle mit Symbolen und ihren Werten
 st.markdown("---")
-st.markdown("## Gewinnübersicht")
-st.markdown("""
+st.markdown("## Gewinnübersicht pro Symbol")
+table_html = """
 <table>
-<thead><tr><th>Kombination</th><th>Gewinnfaktor</th><th>Beispiel bei 100 Coins Einsatz</th></tr></thead>
-<tbody>
-<tr><td>3 gleiche Symbole (Jackpot)</td><td>5x Einsatz</td><td>500 Coins</td></tr>
-<tr><td>2 gleiche Symbole</td><td>1.5x Einsatz</td><td>150 Coins</td></tr>
-<tr><td>keine gleichen</td><td>0x Einsatz</td><td>0 Coins</td></tr>
-</tbody>
-</table>
-""", unsafe_allow_html=True)
+<thead>
+<tr><th>Symbol</th><th>Gewinn bei 2 gleichen</th><th>Gewinn bei 3 gleichen</th></tr>
+</thead><tbody>
+"""
+for sym, weight, val2, val3 in SYMBOLS:
+    table_html += f"<tr><td style='font-size:2em'>{sym}</td><td>{val2}x Einsatz</td><td>{val3}x Einsatz</td></tr>"
 
+table_html += "</tbody></table>"
+st.markdown(table_html, unsafe_allow_html=True)
 
