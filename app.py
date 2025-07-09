@@ -3,13 +3,17 @@ from datetime import datetime
 import random
 import time
 
-# Symbole mit Gewicht und Gewinnfaktoren
+# Symbole mit Gewicht und Gewinnfaktoren (Thema Rettungsdienst)
 SYMBOLS = [
-    ("❤️", 10, 1.2, 4.5),
-    ("🚑", 6, 2.0, 6.0),
-    ("⛑️", 4, 1.5, 5.0),
-    ("💉", 3, 1.3, 4.0),
-    ("🩺", 2, 1.1, 3.5),
+    ("❤️", 10, 1.2, 4.5),     # Herz
+    ("🚑", 8, 2.0, 6.0),      # Krankenwagen
+    ("⛑️", 7, 1.5, 5.0),      # Helm
+    ("💉", 6, 1.3, 4.0),      # Spritze
+    ("🩺", 5, 1.1, 3.5),      # Stethoskop
+    ("🚨", 4, 1.4, 4.8),      # Blaulicht
+    ("🧑‍⚕️", 3, 1.6, 5.5),   # Rettungssanitäter
+    ("🩹", 3, 1.2, 4.2),      # Verband
+    ("📟", 2, 1.1, 3.8),      # Pager
 ]
 
 REELS = 3
@@ -60,13 +64,6 @@ def calculate_win(bet):
         win = 0
         message = "😞 Leider kein Gewinn, versuch's nochmal!"
     return win, message
-
-def spin_animation(spin_box):
-    # Simuliere Walzen-Drehung: 10 schnelle Updates mit zufälligen Symbolen
-    for _ in range(10):
-        random_reels = [random.choice(weighted_reel) for _ in range(REELS)]
-        spin_box.markdown(f"<div style='font-size:5em; text-align:center;'>{' '.join(random_reels)}</div>", unsafe_allow_html=True)
-        time.sleep(0.1)
 
 def spin_slots():
     st.session_state.reels = [random.choice(weighted_reel) for _ in range(REELS)]
@@ -162,18 +159,15 @@ bet = st.slider("Wähle deinen Einsatz (Coins):", min_value=10, max_value=min(20
 spin_box = st.empty()
 
 def render_reels(reels, glow=False):
-    # Glow nur bei Gewinn
     if glow:
-        # Jedes Symbol in <span class="glow">
         html_reels = " ".join([f'<span class="glow">{r}</span>' for r in reels])
     else:
         html_reels = " ".join(reels)
     spin_box.markdown(f"<div style='font-size:5em; text-align:center;'>{html_reels}</div>", unsafe_allow_html=True)
 
 def show_coins_animation():
-    # Zeige 10 Münzen an zufälligen horizontalen Positionen mit Delay (einfach animiert)
     for i in range(10):
-        x = random.randint(10, 90)  # vw
+        x = random.randint(10, 90)
         delay = i * 0.2
         st.markdown(f"""
             <div class="coin" style="left:{x}vw; animation-delay:{delay}s;">💰</div>
@@ -190,7 +184,6 @@ if st.button("🎰 Drehen!"):
             render_reels(random_reels)
             time.sleep(0.1)
         spin_slots()
-        # Glow bei Gewinn
         win, msg = calculate_win(bet)
         st.session_state.win = win
         st.session_state.message = msg
@@ -213,20 +206,17 @@ else:
 
 st.markdown(f'<div class="message">{st.session_state.message}</div>', unsafe_allow_html=True)
 
-# Gewinnübersicht
 st.markdown("---")
 st.markdown("## Gewinnübersicht pro Symbol")
 table_html = """
 <table>
 <thead>
 <tr><th>Symbol</th><th>Gewinn bei 2 gleichen</th><th>Gewinn bei 3 gleichen</th></tr>
-</thead><tbody>
+</thead>
+<tbody>
 """
-for sym, weight, val2, val3 in SYMBOLS:
-    table_html += f"<tr><td style='font-size:2em'>{sym}</td><td>{val2}x Einsatz</td><td>{val3}x Einsatz</td></tr>"
-
+for sym, _, val2, val3 in SYMBOLS:
+    table_html += f"<tr><td style='font-size:1.8em;'>{sym}</td><td>{val2}× Einsatz</td><td>{val3}× Einsatz</td></tr>"
 table_html += "</tbody></table>"
+
 st.markdown(table_html, unsafe_allow_html=True)
-
-
-
