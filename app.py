@@ -23,6 +23,7 @@ defaults = {
     "last_claim": datetime(2000,1,1).date(),
     "reels": ["❓"]*REELS,
     "message": "",
+    "win": 0,
 }
 
 for k,v in defaults.items():
@@ -70,7 +71,7 @@ def spin_animation(spin_box):
 def spin_slots():
     st.session_state.reels = [random.choice(weighted_reel) for _ in range(REELS)]
 
-# Styling mit Farbverläufen, Schatten und schöner Schrift
+# Styling mit Farbverläufen, Schatten, Glow & Animationen
 st.markdown("""
 <style>
     .title {
@@ -89,11 +90,6 @@ st.markdown("""
         text-align: center;
         margin-bottom: 30px;
         text-shadow: 1px 1px 3px #9e0000;
-    }
-    .button-container {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 30px;
     }
     .message {
         font-size: 1.3em;
@@ -128,6 +124,33 @@ st.markdown("""
     tr:nth-child(even) td {
         background: linear-gradient(90deg, #ffcdd2, #ffebee);
     }
+    /* Glitzer-Glow für Gewinn-Symbole */
+    .glow {
+        text-shadow:
+            0 0 5px #ff1744,
+            0 0 10px #ff1744,
+            0 0 20px #ff1744,
+            0 0 30px #ff1744,
+            0 0 40px #f50057;
+        animation: flicker 1.5s infinite alternate;
+    }
+    @keyframes flicker {
+        0% { text-shadow: 0 0 5px #ff1744, 0 0 10px #ff1744, 0 0 20px #ff1744, 0 0 30px #ff1744, 0 0 40px #f50057; }
+        100% { text-shadow: 0 0 10px #ff1744, 0 0 20px #ff1744, 0 0 30px #ff1744, 0 0 40px #f50057, 0 0 50px #ff1744; }
+    }
+    /* Animierte Münzen */
+    @keyframes coin-fall {
+        0% {transform: translateY(-100px) rotate(0deg); opacity: 1;}
+        100% {transform: translateY(200px) rotate(360deg); opacity: 0;}
+    }
+    .coin {
+        font-size: 2em;
+        position: fixed;
+        top: 0;
+        animation: coin-fall 2s ease-in forwards;
+        pointer-events: none;
+        z-index: 9999;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -138,20 +161,55 @@ bet = st.slider("Wähle deinen Einsatz (Coins):", min_value=10, max_value=min(20
 
 spin_box = st.empty()
 
+def render_reels(reels, glow=False):
+    # Glow nur bei Gewinn
+    if glow:
+        # Jedes Symbol in <span class="glow">
+        html_reels = " ".join([f'<span class="glow">{r}</span>' for r in reels])
+    else:
+        html_reels = " ".join(reels)
+    spin_box.markdown(f"<div style='font-size:5em; text-align:center;'>{html_reels}</div>", unsafe_allow_html=True)
+
+def show_coins_animation():
+    # Zeige 10 Münzen an zufälligen horizontalen Positionen mit Delay (einfach animiert)
+    for i in range(10):
+        x = random.randint(10, 90)  # vw
+        delay = i * 0.2
+        st.markdown(f"""
+            <div class="coin" style="left:{x}vw; animation-delay:{delay}s;">💰</div>
+        """, unsafe_allow_html=True)
+
 if st.button("🎰 Drehen!"):
     if bet > st.session_state.coins:
         st.warning("⚠️ Du hast nicht genug Coins für diesen Einsatz!")
     else:
         st.session_state.coins -= bet
-        spin_animation(spin_box)
+        # Dreh-Animation
+        for _ in range(10):
+            random_reels = [random.choice(weighted_reel) for _ in range(REELS)]
+            render_reels(random_reels)
+            time.sleep(0.1)
         spin_slots()
-        spin_box.markdown(f"<div style='font-size:5em; text-align:center;'>{' '.join(st.session_state.reels)}</div>", unsafe_allow_html=True)
+        # Glow bei Gewinn
         win, msg = calculate_win(bet)
-        st.session_state.coins += win
+        st.session_state.win = win
         st.session_state.message = msg
-
+        render_reels(st.session_state.reels, glow=(win > 0))
+        if win > 0:
+            st.session_state.coins += win
+            # Konfetti-GIF
+            st.markdown(
+                """
+                <div style="text-align:center; margin-top: -20px;">
+                    <img src="https://i.gifer.com/origin/3d/3d7a01674fef37120f47866a51248f1e.gif" width="200" />
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            # Münzanimation
+            show_coins_animation()
 else:
-    spin_box.markdown(f"<div style='font-size:5em; text-align:center;'>{' '.join(st.session_state.reels)}</div>", unsafe_allow_html=True)
+    render_reels(st.session_state.reels)
 
 st.markdown(f'<div class="message">{st.session_state.message}</div>', unsafe_allow_html=True)
 
@@ -169,4 +227,6 @@ for sym, weight, val2, val3 in SYMBOLS:
 
 table_html += "</tbody></table>"
 st.markdown(table_html, unsafe_allow_html=True)
+
+
 
