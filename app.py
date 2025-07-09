@@ -60,7 +60,7 @@ def end_game():
     st.session_state.turn = "end"
     st.session_state.game_active = False
 
-# --- Sichere Initialisierung aller State-Variablen ---
+# --- Session-State Initialisierung ---
 defaults = {
     "coins": 1000,
     "last_claim": datetime(2000, 1, 1).date(),
@@ -116,10 +116,12 @@ if st.session_state.turn == "player":
         st.session_state.player_hand.append(draw_card())
         if calculate_score(st.session_state.player_hand) > 21:
             end_game()
+        st.experimental_rerun()  # ➕ Sofortige Anzeige nach Zug
 
     if col2.button("✋ Halten"):
         st.session_state.turn = "dealer"
         end_game()
+        st.experimental_rerun()  # ➕ Re-run für sofortige Sichtbarkeit
 
 # --- Spielende ---
 if st.session_state.turn == "end":
