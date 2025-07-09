@@ -11,7 +11,7 @@ SYMBOLS = [
     ("💉", 6, 1.3, 4.0),      # Spritze
     ("🩺", 5, 1.1, 3.5),      # Stethoskop
     ("🚨", 4, 1.4, 4.8),      # Blaulicht
-    ("👩‍🚒", 3, 1.6, 5.5),   # Rettungssanitäter
+    ("🧑‍⚕️", 3, 1.6, 5.5),   # Rettungssanitäter
     ("🩹", 3, 1.2, 4.2),      # Verband
     ("📟", 2, 1.1, 3.8),      # Pager
 ]
@@ -89,14 +89,13 @@ st.markdown("""
         text-shadow: 1px 1px 3px #9e0000;
     }
     .message {
-        font-size: 1.6em;
-        font-weight: 800;
+        font-size: 1.3em;
+        font-weight: 700;
         color: #b71c1c;
         text-align: center;
-        margin-top: 10px; /* Weniger Abstand */
-        min-height: 2.5em;
-        text-shadow: 1px 1px 3px #7f0000;
-        line-height: 1.2;
+        margin-top: 10px;
+        min-height: 2em;
+        text-shadow: 1px 1px 2px #7f0000;
     }
     table {
         margin-left: auto;
@@ -189,7 +188,6 @@ if st.button("🎰 Drehen!"):
         st.session_state.win = win
         st.session_state.message = msg
         render_reels(st.session_state.reels, glow=(win > 0))
-        st.markdown(f'<div class="message">{st.session_state.message}</div>', unsafe_allow_html=True)
         if win > 0:
             st.session_state.coins += win
             # Konfetti-GIF
@@ -203,9 +201,18 @@ if st.button("🎰 Drehen!"):
             )
             # Münzanimation
             show_coins_animation()
+            # Sound bei Gewinn
+            st.markdown(
+                """
+                <audio autoplay>
+                  <source src="https://www.myinstants.com/media/sounds/success-fanfare-trumpets.mp3" type="audio/mpeg">
+                </audio>
+                """, unsafe_allow_html=True
+            )
 else:
     render_reels(st.session_state.reels)
-    st.markdown(f'<div class="message">{st.session_state.message}</div>', unsafe_allow_html=True)
+
+st.markdown(f'<div class="message">{st.session_state.message}</div>', unsafe_allow_html=True)
 
 st.markdown("---")
 st.markdown("## Gewinnübersicht pro Symbol")
