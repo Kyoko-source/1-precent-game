@@ -34,7 +34,15 @@ def start_game(bet):
     st.session_state.message = ""
     st.session_state.game_active = True
 
+def dealer_plays():
+    while calculate_score(st.session_state.dealer_hand) < 17:
+        st.session_state.dealer_hand.append(draw_card())
+
 def end_game():
+    # Bank spielt, falls noch nicht geschehen
+    if st.session_state.turn != "dealer":
+        dealer_plays()
+
     p_score = calculate_score(st.session_state.player_hand)
     d_score = calculate_score(st.session_state.dealer_hand)
 
@@ -48,12 +56,9 @@ def end_game():
         st.session_state.coins += st.session_state.bet
     else:
         st.session_state.message = "❌ Verloren!"
-    st.session_state.game_active = False
-    st.session_state.turn = "end"
 
-def dealer_plays():
-    while calculate_score(st.session_state.dealer_hand) < 17:
-        st.session_state.dealer_hand.append(draw_card())
+    st.session_state.turn = "end"
+    st.session_state.game_active = False
 
 # --- Sichere Initialisierung aller State-Variablen ---
 defaults = {
@@ -81,11 +86,11 @@ if st.session_state.last_claim != today:
 
 # --- UI Start ---
 st.title("🃏 Blackjack mit Coins")
-st.caption("Spiele gegen die Bank – rein virtuell.")
+st.caption("Spiele Blackjack gegen die Bank – rein virtuell.")
 st.write(f"💰 Aktuelles Guthaben: **{st.session_state.coins} Coins**")
 
 # --- Spiel starten ---
-if not st.session_state.game_active:
+if not st.session_state.game_active and st.session_state.turn != "end":
     bet = st.number_input("💸 Einsatz wählen", min_value=10, max_value=st.session_state.coins, step=10)
     if st.button("🎮 Spielen"):
         start_game(bet)
@@ -106,15 +111,14 @@ if st.session_state.game_active or st.session_state.turn == "end":
 # --- Spieleraktionen ---
 if st.session_state.turn == "player":
     col1, col2 = st.columns(2)
+
     if col1.button("🃕 Karte ziehen"):
         st.session_state.player_hand.append(draw_card())
         if calculate_score(st.session_state.player_hand) > 21:
-            st.session_state.turn = "end"
             end_game()
 
     if col2.button("✋ Halten"):
         st.session_state.turn = "dealer"
-        dealer_plays()
         end_game()
 
 # --- Spielende ---
