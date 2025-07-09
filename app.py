@@ -14,7 +14,7 @@ SYMBOLS = [
     ("👩‍🚒", 3, 2.8, 10.0),
     ("🩹", 3, 2.0, 8.0),
     ("📟", 2, 1.6, 7.5),
-    ("🔥", 100, 10.0, 0.0),  # Jackpot-Symbol (sehr selten!)
+    ("🔥", 1, 10.0, 0.0),  # Jackpot-Symbol (sehr selten!)
 ]
 
 REELS = 3
@@ -83,7 +83,7 @@ def calculate_win(bet):
                 return win, f"👍 Zwei gleiche {sym}! Du gewinnst {win} Coins!"
 
     # Verlust → Jackpot wächst
-    st.session_state.jackpot += int(bet * 0.1)
+    st.session_state.jackpot += int(bet * 0.5)
     return 0, "😞 Kein Gewinn – der Jackpot wächst weiter!"
 
 def spin_slots():
