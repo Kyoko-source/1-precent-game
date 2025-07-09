@@ -1,191 +1,221 @@
 import streamlit as st
-import random
 from datetime import datetime
+import random
+import time
 
-# --- Einstellungen ---
-ROWS, COLUMNS = 3, 3
-
-LEVEL_SYMBOLS = {
-    1: [
-        ("🚑", 50, 100),  # Symbol, Gewinn bei 2 gleichen, Gewinn bei 3 gleichen (Faktor vom Einsatz)
-        ("⛑️", 20, 50),
-        ("💉", 10, 30),
-        ("🩺", 5, 15),
-        ("🚨", 2, 8),
-    ],
-    2: [
-        ("🚑", 70, 140),
-        ("⛑️", 30, 80),
-        ("💉", 15, 40),
-        ("🩺", 7, 20),
-        ("🚨", 3, 10),
-        ("🚒", 5, 25),  # neu
-    ],
-    3: [
-        ("🚑", 100, 200),
-        ("⛑️", 50, 100),
-        ("💉", 30, 70),
-        ("🩺", 15, 40),
-        ("🚨", 8, 20),
-        ("🚒", 10, 50),
-        ("🏥", 5, 25),  # neu
-    ],
-}
-
-# Gewinnlinien (indizes: (row, col))
-WIN_LINES = [
-    # Horizontal
-    [(0,0), (0,1), (0,2)],
-    [(1,0), (1,1), (1,2)],
-    [(2,0), (2,1), (2,2)],
-    # Vertikal
-    [(0,0), (1,0), (2,0)],
-    [(0,1), (1,1), (2,1)],
-    [(0,2), (1,2), (2,2)],
-    # Diagonal
-    [(0,0), (1,1), (2,2)],
-    [(0,2), (1,1), (2,0)],
+# Symbole mit Gewicht und Gewinnfaktoren (Thema Rettungsdienst)
+SYMBOLS = [
+    ("❤️", 10, 1.2, 4.5),     # Herz
+    ("🚑", 8, 2.0, 6.0),      # Krankenwagen
+    ("⛑️", 7, 1.5, 5.0),      # Helm
+    ("💉", 6, 1.3, 4.0),      # Spritze
+    ("🩺", 5, 1.1, 3.5),      # Stethoskop
+    ("🚨", 4, 1.4, 4.8),      # Blaulicht
+    ("🧑‍⚕️", 3, 1.6, 5.5),   # Rettungssanitäter
+    ("🩹", 3, 1.2, 4.2),      # Verband
+    ("📟", 2, 1.1, 3.8),      # Pager
 ]
 
-# --- Hilfsfunktionen ---
+REELS = 3
 
-def weighted_choice(symbols):
-    # Erstelle eine Liste mit Symbolen, die je nach Level öfter vorkommen (für unterschiedliche Wahrscheinlichkeiten)
-    # Hier einfach gleiche Wahrscheinlichkeiten
-    choices = []
-    for sym, val2, val3 in symbols:
-        # Symbol häufiger je nach Level
-        weight = 10  # Standardgewicht
-        choices.extend([sym]*weight)
-    return random.choice(choices)
-
-def calculate_win(grid, bet, symbols):
-    # Gewinn prüfen für alle Gewinnlinien
-    symbol_values = {sym: (val2, val3) for sym, val2, val3 in symbols}
-    total_win = 0
-    win_lines = []
-    bonus_active = False
-
-    for idx, line in enumerate(WIN_LINES, 1):
-        line_symbols = [grid[r][c] for r,c in line]
-        counts = {}
-        for s in line_symbols:
-            counts[s] = counts.get(s, 0) + 1
-        # 3 gleiche?
-        for sym, count in counts.items():
-            if count == 3:
-                win = bet * symbol_values[sym][1]
-                total_win += win
-                win_lines.append((f"Linie {idx}", "3 gleiche", f"{win} Coins mit {sym}"))
-                if sym == "🚑":
-                    bonus_active = True
-                break
-            elif count == 2:
-                win = bet * symbol_values[sym][0]
-                total_win += win
-                win_lines.append((f"Linie {idx}", "2 gleiche", f"{win} Coins mit {sym}"))
-                break
-    return total_win, bonus_active, win_lines
-
-# --- Session-State Initialisierung ---
+weighted_reel = []
+for symbol, weight, _, _ in SYMBOLS:
+    weighted_reel.extend([symbol]*weight)
 
 defaults = {
     "coins": 1000,
     "last_claim": datetime(2000,1,1).date(),
-    "level": 1,
-    "grid": [["❓"]*COLUMNS for _ in range(ROWS)],
-    "bet": 0,
+    "reels": ["❓"]*REELS,
     "message": "",
-    "bonus_active": False,
-    "bonus_spins": 0,
+    "win": 0,
 }
 
-for key, val in defaults.items():
-    if key not in st.session_state:
-        st.session_state[key] = val
+for k,v in defaults.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
 
-# --- Täglicher Bonus ---
 today = datetime.today().date()
 if st.session_state.last_claim != today:
     st.session_state.coins += 500
     st.session_state.last_claim = today
-    st.success("🎁 Täglicher Bonus: +500 Coins!")
+    st.success("🎁 Täglicher Rettungsdienst-Bonus: +500 Coins")
 
-# --- UI ---
-st.title("🚑 Rettungsdienst Slotmaschine")
-st.write(f"💰 Dein Guthaben: **{st.session_state.coins} Coins**")
-st.write(f"🎚 Level: {st.session_state.level}")
+def get_symbol_info(sym):
+    for s, w, val2, val3 in SYMBOLS:
+        if s == sym:
+            return val2, val3
+    return 1.0, 5.0
 
-# Einsatz auswählen
-if not st.session_state.bonus_active:
-    bet = st.number_input("💸 Einsatz wählen", min_value=10, max_value=st.session_state.coins, step=10, value=10)
-else:
-    bet = st.session_state.bet
-    st.info(f"🔄 Bonusrunde! Einsatz automatisch: {bet} Coins")
-
-spin_button = st.button("🎰 Walzen drehen")
-
-# Walzen anzeigen
-st.markdown("### 🎰 Walzen:")
-for row in st.session_state.grid:
-    st.write(" | ".join(row))
-
-# Aktion beim Drehen
-if spin_button or st.session_state.bonus_active:
-    if not st.session_state.bonus_active:
-        if bet > st.session_state.coins:
-            st.warning("Nicht genug Coins!")
-        else:
-            st.session_state.coins -= bet
-            st.session_state.bet = bet
-
-    # Spin ausführen
-    symbols = LEVEL_SYMBOLS[st.session_state.level]
-    new_grid = [[random.choice([sym for sym,_,_ in symbols]) for _ in range(COLUMNS)] for _ in range(ROWS)]
-    st.session_state.grid = new_grid
-
-    # Gewinn prüfen
-    win, bonus, win_lines = calculate_win(new_grid, st.session_state.bet, symbols)
-
-    if win > 0:
-        if bonus:
-            st.session_state.message = f"🎉 Bonus ausgelöst! Du hast {len(win_lines)} Gewinnlinien mit 🚑 erzielt."
-            st.session_state.bonus_active = True
-            st.session_state.bonus_spins = 3
-            st.session_state.coins += win
-        else:
-            st.session_state.message = f"🎉 Du hast {win} Coins gewonnen auf Linien: {', '.join([f'{line[0]} {line[1]} ({line[2]})' for line in win_lines])}!"
-            st.session_state.coins += win
+def calculate_win(bet):
+    reels = st.session_state.reels
+    unique = set(reels)
+    if len(unique) == 1:
+        val2, val3 = get_symbol_info(reels[0])
+        win = int(bet * val3)
+        message = f"🎉 Jackpot! 3x {reels[0]}! Du gewinnst {win} Coins!"
+    elif len(unique) == 2:
+        for sym in unique:
+            if reels.count(sym) == 2:
+                val2, val3 = get_symbol_info(sym)
+                win = int(bet * val2)
+                message = f"👍 Zwei gleiche {sym}! Du gewinnst {win} Coins!"
+                break
     else:
-        st.session_state.message = "Leider kein Gewinn."
+        win = 0
+        message = "😞 Leider kein Gewinn, versuch's nochmal!"
+    return win, message
 
-    if st.session_state.bonus_active:
-        st.session_state.bonus_spins -= 1
-        if st.session_state.bonus_spins <= 0:
-            st.session_state.bonus_active = False
-            st.success("🛑 Bonusrunde beendet!")
+def spin_slots():
+    st.session_state.reels = [random.choice(weighted_reel) for _ in range(REELS)]
 
-    # Levelaufstieg
-    if st.session_state.coins >= st.session_state.level * 5000:
-        st.session_state.level = min(3, st.session_state.level + 1)
-        st.balloons()
-        st.success(f"🎉 Du bist auf Level {st.session_state.level} aufgestiegen!")
-
-    st.success(st.session_state.message)
-
-# Auszahlungstabelle
-st.markdown("## Auszahlungstabelle")
-
-table_html = """
+# Styling mit Farbverläufen, Schatten, Glow & Animationen
+st.markdown("""
 <style>
-table, th, td {border:1px solid black; border-collapse: collapse; padding:6px; text-align:center;}
-th {background-color:#4CAF50; color:white;}
+    .title {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 3.5em;
+        font-weight: 900;
+        color: #b71c1c;
+        text-align: center;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 5px #7f0000;
+    }
+    .coins {
+        font-size: 1.6em;
+        font-weight: bold;
+        color: #d32f2f;
+        text-align: center;
+        margin-bottom: 30px;
+        text-shadow: 1px 1px 3px #9e0000;
+    }
+    .message {
+        font-size: 1.3em;
+        font-weight: 700;
+        color: #b71c1c;
+        text-align: center;
+        margin-top: 20px;
+        min-height: 2em;
+        text-shadow: 1px 1px 2px #7f0000;
+    }
+    table {
+        margin-left: auto;
+        margin-right: auto;
+        border-collapse: collapse;
+        width: 75%;
+        font-family: Arial, sans-serif;
+        box-shadow: 0 4px 8px rgba(183, 28, 28, 0.5);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    th, td {
+        border: 1px solid #b71c1c;
+        padding: 12px 18px;
+        text-align: center;
+        background: linear-gradient(90deg, #ffebee, #ffcdd2);
+    }
+    th {
+        background-color: #b71c1c;
+        color: white;
+        font-size: 1.1em;
+    }
+    tr:nth-child(even) td {
+        background: linear-gradient(90deg, #ffcdd2, #ffebee);
+    }
+    /* Glitzer-Glow für Gewinn-Symbole */
+    .glow {
+        text-shadow:
+            0 0 5px #ff1744,
+            0 0 10px #ff1744,
+            0 0 20px #ff1744,
+            0 0 30px #ff1744,
+            0 0 40px #f50057;
+        animation: flicker 1.5s infinite alternate;
+    }
+    @keyframes flicker {
+        0% { text-shadow: 0 0 5px #ff1744, 0 0 10px #ff1744, 0 0 20px #ff1744, 0 0 30px #ff1744, 0 0 40px #f50057; }
+        100% { text-shadow: 0 0 10px #ff1744, 0 0 20px #ff1744, 0 0 30px #ff1744, 0 0 40px #f50057, 0 0 50px #ff1744; }
+    }
+    /* Animierte Münzen */
+    @keyframes coin-fall {
+        0% {transform: translateY(-100px) rotate(0deg); opacity: 1;}
+        100% {transform: translateY(200px) rotate(360deg); opacity: 0;}
+    }
+    .coin {
+        font-size: 2em;
+        position: fixed;
+        top: 0;
+        animation: coin-fall 2s ease-in forwards;
+        pointer-events: none;
+        z-index: 9999;
+    }
 </style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="title">🚑 Rettungsdienst Slotmaschine 🚑</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="coins">💰 Coins: {st.session_state.coins}</div>', unsafe_allow_html=True)
+
+bet = st.slider("Wähle deinen Einsatz (Coins):", min_value=10, max_value=min(200, st.session_state.coins), step=10)
+
+spin_box = st.empty()
+
+def render_reels(reels, glow=False):
+    if glow:
+        html_reels = " ".join([f'<span class="glow">{r}</span>' for r in reels])
+    else:
+        html_reels = " ".join(reels)
+    spin_box.markdown(f"<div style='font-size:5em; text-align:center;'>{html_reels}</div>", unsafe_allow_html=True)
+
+def show_coins_animation():
+    for i in range(10):
+        x = random.randint(10, 90)
+        delay = i * 0.2
+        st.markdown(f"""
+            <div class="coin" style="left:{x}vw; animation-delay:{delay}s;">💰</div>
+        """, unsafe_allow_html=True)
+
+if st.button("🎰 Drehen!"):
+    if bet > st.session_state.coins:
+        st.warning("⚠️ Du hast nicht genug Coins für diesen Einsatz!")
+    else:
+        st.session_state.coins -= bet
+        # Dreh-Animation
+        for _ in range(10):
+            random_reels = [random.choice(weighted_reel) for _ in range(REELS)]
+            render_reels(random_reels)
+            time.sleep(0.1)
+        spin_slots()
+        win, msg = calculate_win(bet)
+        st.session_state.win = win
+        st.session_state.message = msg
+        render_reels(st.session_state.reels, glow=(win > 0))
+        if win > 0:
+            st.session_state.coins += win
+            # Konfetti-GIF
+            st.markdown(
+                """
+                <div style="text-align:center; margin-top: -20px;">
+                    <img src="https://i.gifer.com/origin/3d/3d7a01674fef37120f47866a51248f1e.gif" width="200" />
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            # Münzanimation
+            show_coins_animation()
+else:
+    render_reels(st.session_state.reels)
+
+st.markdown(f'<div class="message">{st.session_state.message}</div>', unsafe_allow_html=True)
+
+st.markdown("---")
+st.markdown("## Gewinnübersicht pro Symbol")
+table_html = """
 <table>
-<thead><tr><th>Symbol</th><th>Gewinn bei 2 gleichen</th><th>Gewinn bei 3 gleichen</th></tr></thead>
+<thead>
+<tr><th>Symbol</th><th>Gewinn bei 2 gleichen</th><th>Gewinn bei 3 gleichen</th></tr>
+</thead>
 <tbody>
 """
-for sym, val2, val3 in LEVEL_SYMBOLS[st.session_state.level]:
+for sym, _, val2, val3 in SYMBOLS:
     table_html += f"<tr><td style='font-size:1.8em;'>{sym}</td><td>{val2}× Einsatz</td><td>{val3}× Einsatz</td></tr>"
 table_html += "</tbody></table>"
 
