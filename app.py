@@ -11,7 +11,7 @@ SYMBOLS = [
     ("💉", 6, 1.3, 4.0),      # Spritze
     ("🩺", 5, 1.1, 3.5),      # Stethoskop
     ("🚨", 4, 1.4, 4.8),      # Blaulicht
-    ("🧑‍⚕️", 3, 1.6, 5.5),   # Rettungssanitäter
+    ("👩‍🚒", 3, 1.6, 5.5),   # Rettungssanitäter
     ("🩹", 3, 1.2, 4.2),      # Verband
     ("📟", 2, 1.1, 3.8),      # Pager
 ]
