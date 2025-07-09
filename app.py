@@ -2,7 +2,7 @@ import streamlit as st
 import random
 from datetime import datetime
 
-# --- Kartenwerte & Deck ---
+# Kartenwerte & Deck
 CARD_VALUES = {
     "2": 2, "3": 3, "4": 4, "5": 5, "6": 6,
     "7": 7, "8": 8, "9": 9, "10": 10,
@@ -10,7 +10,6 @@ CARD_VALUES = {
 }
 FULL_DECK = list(CARD_VALUES.keys()) * 4
 
-# --- Hilfsfunktionen ---
 def calculate_score(hand):
     score = sum(CARD_VALUES[card] for card in hand)
     aces = hand.count("A")
@@ -59,7 +58,7 @@ def end_game():
     st.session_state.turn = "end"
     st.session_state.game_active = False
 
-# --- Session-State Initialisierung ---
+# Session-State Initialisierung
 defaults = {
     "coins": 1000,
     "last_claim": datetime(2000, 1, 1).date(),
@@ -76,26 +75,26 @@ for key, value in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
-# --- Täglicher Bonus ---
+# Täglicher Bonus
 today = datetime.today().date()
 if st.session_state.last_claim != today:
     st.session_state.coins += 1000
     st.session_state.last_claim = today
     st.success("🎁 Täglicher Bonus: +1000 Coins")
 
-# --- UI Start ---
+# UI Start
 st.title("🃏 Blackjack mit Coins")
 st.caption("Spiele Blackjack gegen die Bank – rein virtuell.")
 st.write(f"💰 Aktuelles Guthaben: **{st.session_state.coins} Coins**")
 
-# --- Spiel starten ---
+# Spiel starten
 if not st.session_state.game_active and st.session_state.turn != "end":
     bet = st.number_input("💸 Einsatz wählen", min_value=10, max_value=st.session_state.coins, step=10)
     if st.button("🎮 Spielen"):
         start_game(bet)
         st.experimental_rerun()
 
-# --- Spielanzeige ---
+# Spielanzeige
 if st.session_state.game_active or st.session_state.turn == "end":
     st.subheader("🧍 Deine Karten:")
     st.write(" | ".join(st.session_state.player_hand))
@@ -108,7 +107,7 @@ if st.session_state.game_active or st.session_state.turn == "end":
     else:
         st.write(f"{st.session_state.dealer_hand[0]} | ❓")
 
-# --- Spieleraktionen ---
+# Spieleraktionen
 if st.session_state.turn == "player":
     col1, col2 = st.columns(2)
 
@@ -123,7 +122,7 @@ if st.session_state.turn == "player":
         end_game()
         st.experimental_rerun()
 
-# --- Spielende ---
+# Spielende
 if st.session_state.turn == "end":
     st.subheader("📢 Ergebnis:")
     st.success(st.session_state.message)
