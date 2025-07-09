@@ -1,5 +1,5 @@
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 import time
 
@@ -28,49 +28,35 @@ defaults = {
     "reels": ["❓"]*REELS,
     "message": "",
     "win": 0,
-    "jackpot": 0,           # Jackpot Startwert
+    "jackpot": 0,
 }
 
 for k,v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
+def get_next_midnight():
+    now = datetime.now()
+    tomorrow = now.date() + timedelta(days=1)
+    midnight = datetime.combine(tomorrow, datetime.min.time())
+    return midnight
+
+def get_time_until_midnight():
+    now = datetime.now()
+    midnight = get_next_midnight()
+    return midnight - now
+
+# Bonus täglich um Mitternacht
 today = datetime.today().date()
 if st.session_state.last_claim != today:
     st.session_state.coins += 500
     st.session_state.last_claim = today
     st.success("🎁 Täglicher Rettungsdienst-Bonus: +500 Coins")
 
-def get_symbol_info(sym):
-    for s, w, val2, val3 in SYMBOLS:
-        if s == sym:
-            return val2, val3
-    return 1.0, 5.0
-
-def calculate_win(bet):
-    reels = st.session_state.reels
-    unique = set(reels)
-    if len(unique) == 1:
-        val2, val3 = get_symbol_info(reels[0])
-        # Jackpot-Gewinn
-        jackpot_win = st.session_state.jackpot
-        win = int(bet * val3) + jackpot_win
-        message = f"🎉 Jackpot! 3x {reels[0]}! Du gewinnst {int(bet * val3)} Coins + Jackpot {jackpot_win} Coins = {win} Coins!"
-        st.session_state.jackpot = 0  # Jackpot zurücksetzen
-    elif len(unique) == 2:
-        for sym in unique:
-            if reels.count(sym) == 2:
-                val2, val3 = get_symbol_info(sym)
-                win = int(bet * val2)
-                message = f"👍 Zwei gleiche {sym}! Du gewinnst {win} Coins!"
-                break
-    else:
-        win = 0
-        message = "😞 Leider kein Gewinn, versuch's nochmal!"
-    return win, message
-
-def spin_slots():
-    st.session_state.reels = [random.choice(weighted_reel) for _ in range(REELS)]
+# Countdown berechnen
+time_left = get_time_until_midnight()
+hours, remainder = divmod(time_left.seconds, 3600)
+minutes, seconds = divmod(remainder, 60)
 
 # Styling mit Farbverläufen, Schatten, Glow & Animationen
 st.markdown("""
@@ -100,12 +86,19 @@ st.markdown("""
         margin-bottom: 20px;
         text-shadow: 1px 1px 4px #b71c1c;
     }
+    .countdown {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: #d84315;
+        text-align: center;
+        margin-bottom: 15px;
+    }
     .message {
         font-size: 1.6em;
         font-weight: 800;
         color: #b71c1c;
         text-align: center;
-        margin-top: 10px; /* Weniger Abstand */
+        margin-top: 10px;
         min-height: 2.5em;
         text-shadow: 1px 1px 3px #7f0000;
         line-height: 1.2;
@@ -165,12 +158,46 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="title">🚑 Rettungsdienst Slotmaschine 🚑</div>', unsafe_allow_html=True)
+
+# Countdown anzeigen
+st.markdown(f'<div class="countdown">⏳ Nächster Bonus in: {hours:02d}h {minutes:02d}m {seconds:02d}s</div>', unsafe_allow_html=True)
+
 st.markdown(f'<div class="coins">💰 Coins: {st.session_state.coins}</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="jackpot">🎰 Jackpot: {st.session_state.jackpot} Coins</div>', unsafe_allow_html=True)
 
 bet = st.slider("Wähle deinen Einsatz (Coins):", min_value=10, max_value=min(200, st.session_state.coins), step=10)
 
 spin_box = st.empty()
+
+def get_symbol_info(sym):
+    for s, w, val2, val3 in SYMBOLS:
+        if s == sym:
+            return val2, val3
+    return 1.0, 5.0
+
+def calculate_win(bet):
+    reels = st.session_state.reels
+    unique = set(reels)
+    if len(unique) == 1:
+        val2, val3 = get_symbol_info(reels[0])
+        jackpot_win = st.session_state.jackpot
+        win = int(bet * val3) + jackpot_win
+        message = f"🎉 Jackpot! 3x {reels[0]}! Du gewinnst {int(bet * val3)} Coins + Jackpot {jackpot_win} Coins = {win} Coins!"
+        st.session_state.jackpot = 0
+    elif len(unique) == 2:
+        for sym in unique:
+            if reels.count(sym) == 2:
+                val2, val3 = get_symbol_info(sym)
+                win = int(bet * val2)
+                message = f"👍 Zwei gleiche {sym}! Du gewinnst {win} Coins!"
+                break
+    else:
+        win = 0
+        message = "😞 Leider kein Gewinn, versuch's nochmal!"
+    return win, message
+
+def spin_slots():
+    st.session_state.reels = [random.choice(weighted_reel) for _ in range(REELS)]
 
 def render_reels(reels, glow=False):
     if glow:
@@ -193,7 +220,6 @@ if st.button("🎰 Drehen!"):
     else:
         st.session_state.coins -= bet
 
-        # Dreh-Animation
         for _ in range(10):
             random_reels = [random.choice(weighted_reel) for _ in range(REELS)]
             render_reels(random_reels)
@@ -208,11 +234,8 @@ if st.button("🎰 Drehen!"):
 
         if win > 0:
             st.session_state.coins += win
-            # Jackpot bei Gewinn zurückgesetzt (siehe calculate_win)
-            # Münzanimation
             show_coins_animation()
         else:
-            # Bei Verlust steigt Jackpot um 10% des Einsatzes
             st.session_state.jackpot += int(bet * 0.1)
 
 else:
