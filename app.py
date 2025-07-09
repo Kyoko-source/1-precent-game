@@ -14,7 +14,7 @@ SYMBOLS = [
     ("👩‍🚒", 3, 2.8, 10.0),
     ("🩹", 3, 2.0, 8.0),
     ("📟", 2, 1.6, 7.5),
-    ("🔥", 1, 10.0, 0.0),  # Jackpot-Symbol (sehr selten!)
+    ("🔥", 1, 10.0, 0.0),  # Jackpot-Symbol
 ]
 
 REELS = 3
@@ -67,7 +67,7 @@ def calculate_win(bet):
     if reels.count("🔥") == 3:
         jackpot = st.session_state.jackpot
         st.session_state.jackpot = JACKPOT_START
-        return jackpot, f"🔥🔥🔥 JACKPOT! 3x 🔥 – Du gewinnst den Jackpot: {jackpot} Coins!"
+        return jackpot, f"🔥🔥🔥 JACKPOT! Du gewinnst den Jackpot: {jackpot} Coins!"
 
     elif len(unique) == 1:
         val2, val3 = get_symbol_info(reels[0])
@@ -89,7 +89,7 @@ def calculate_win(bet):
 def spin_slots():
     st.session_state.reels = [random.choice(weighted_reel) for _ in range(REELS)]
 
-# Style
+# Style & Animation
 st.markdown("""
 <style>
     .title {
@@ -112,6 +112,17 @@ st.markdown("""
         text-align: center;
         color: #b71c1c;
         min-height: 2em;
+    }
+    .coin {
+        position: fixed;
+        top: 50%;
+        font-size: 2em;
+        animation: drop 1s ease-out forwards;
+        z-index: 9999;
+    }
+    @keyframes drop {
+        0% { transform: translateY(0) scale(1); opacity: 1; }
+        100% { transform: translateY(-200px) scale(1.5); opacity: 0; }
     }
 </style>
 """, unsafe_allow_html=True)
