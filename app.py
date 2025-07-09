@@ -11,7 +11,7 @@ SYMBOLS = [
     ("💉", 6, 1.3, 4.0),      # Spritze
     ("🩺", 5, 1.1, 3.5),      # Stethoskop
     ("🚨", 4, 1.4, 4.8),      # Blaulicht
-    ("👩‍🚒", 3, 1.6, 5.5),   # Rettungssanitäter
+    ("👩‍🚒", 3, 1.6, 5.5),    # Rettungssanitäter
     ("🩹", 3, 1.2, 4.2),      # Verband
     ("📟", 2, 1.1, 3.8),      # Pager
 ]
@@ -68,149 +68,77 @@ def calculate_win(bet):
 def spin_slots():
     st.session_state.reels = [random.choice(weighted_reel) for _ in range(REELS)]
 
-# Styling mit Hintergrundbild, Overlays, schöner Typografie und Animationen
+# Styling mit vollem Hintergrund und ohne Glanzeffekt
 st.markdown("""
 <style>
-    /* Hintergrundbild mit Fixierung und leichtem Overlay */
     body {
         background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80');
         background-size: cover;
-        background-attachment: fixed;
         background-position: center;
+        background-repeat: no-repeat;
+        margin: 0;
+        padding: 0;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        color: #fff;
     }
-
-    /* Halbdurchsichtiger Container für alles */
     .main-container {
-        background: rgba(39, 39, 39, 0.8);
+        background: #272727;
         max-width: 720px;
         margin: 40px auto 60px auto;
         padding: 25px 40px 40px 40px;
         border-radius: 15px;
         box-shadow: 0 0 20px 5px rgba(183, 28, 28, 0.7);
+        color: #f5f5f5;
     }
-
-    /* Titel mit Farbverlauf und Schatten */
     .title {
         font-size: 3.5em;
         font-weight: 900;
-        background: linear-gradient(45deg, #ff1744, #ff7961);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #f44336;
         text-align: center;
-        margin-bottom: 15px;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-        user-select: none;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 5px #7f0000;
     }
-
-    /* Coins Anzeige */
     .coins {
-        font-size: 1.8em;
-        font-weight: 700;
-        color: #ff5252;
+        font-size: 1.6em;
+        font-weight: bold;
+        color: #e53935;
         text-align: center;
         margin-bottom: 30px;
-        text-shadow: 0 1px 5px rgba(0,0,0,0.5);
-        user-select: none;
+        text-shadow: 1px 1px 3px #9e0000;
     }
-
-    /* Message */
     .message {
         font-size: 1.6em;
-        font-weight: 700;
-        color: #ff7961;
+        font-weight: 800;
+        color: #ef5350;
         text-align: center;
         margin-top: 10px;
         min-height: 2.5em;
-        text-shadow: 0 0 5px #ff5252;
         line-height: 1.2;
-        user-select: none;
     }
-
-    /* Reels Darstellung */
-    .reels {
-        font-size: 6em;
-        text-align: center;
-        letter-spacing: 15px;
-        user-select: none;
-        margin-bottom: 10px;
-        text-shadow: 0 0 15px #ff1744, 0 0 30px #ff7961;
-    }
-
-    /* Glow Effekt für Gewinnsymbole */
-    .glow {
-        animation: flicker 1.5s infinite alternate;
-        text-shadow:
-            0 0 8px #ff1744,
-            0 0 18px #ff1744,
-            0 0 28px #ff1744,
-            0 0 38px #ff7961,
-            0 0 48px #ff7961;
-    }
-    @keyframes flicker {
-        0% { text-shadow: 0 0 8px #ff1744, 0 0 18px #ff1744, 0 0 28px #ff1744, 0 0 38px #ff7961, 0 0 48px #ff7961; }
-        100% { text-shadow: 0 0 12px #ff1744, 0 0 22px #ff1744, 0 0 32px #ff1744, 0 0 42px #ff7961, 0 0 52px #ff7961; }
-    }
-
-    /* Button Styling */
-    div.stButton > button {
-        background: linear-gradient(45deg, #ff1744, #ff7961);
-        border: none;
-        padding: 12px 25px;
-        border-radius: 12px;
-        font-size: 1.3em;
-        font-weight: 700;
-        color: white;
-        box-shadow: 0 0 15px #ff1744;
-        cursor: pointer;
-        transition: background 0.3s ease, box-shadow 0.3s ease;
-        user-select: none;
-        width: 100%;
-    }
-    div.stButton > button:hover {
-        background: linear-gradient(45deg, #ff7961, #ff1744);
-        box-shadow: 0 0 25px #ff5252;
-    }
-
-    /* Slider Styling */
-    .stSlider > div {
-        color: #ffbaba;
-        font-weight: 700;
-    }
-
-    /* Tabelle Gewinnübersicht */
     table {
         margin-left: auto;
         margin-right: auto;
         border-collapse: collapse;
-        width: 100%;
+        width: 75%;
         font-family: Arial, sans-serif;
-        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(183, 28, 28, 0.5);
+        border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 0 25px rgba(255, 23, 68, 0.7);
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
-        user-select: none;
+        background: #fff;
+        color: #333;
     }
     th, td {
-        border: 1px solid #ff1744;
+        border: 1px solid #b71c1c;
         padding: 12px 18px;
         text-align: center;
     }
     th {
-        background: linear-gradient(90deg, #ff1744, #ff7961);
+        background-color: #b71c1c;
         color: white;
         font-size: 1.1em;
     }
-    tr:nth-child(even) {
-        background: rgba(255, 255, 255, 0.15);
+    tr:nth-child(even) td {
+        background: #fce4ec;
     }
-    tr:hover {
-        background: rgba(255, 23, 68, 0.25);
-        transition: background 0.3s ease;
-    }
-
     /* Münzanimation */
     @keyframes coin-fall {
         0% {transform: translateY(-100px) rotate(0deg); opacity: 1;}
@@ -224,10 +152,21 @@ st.markdown("""
         pointer-events: none;
         z-index: 9999;
     }
+    /* Reels Styling */
+    .reels {
+        font-size: 5em;
+        text-align: center;
+        user-select: none;
+        letter-spacing: 1rem;
+        margin-bottom: 0.4rem;
+        color: #f44336;
+        text-shadow: 1px 1px 2px #7f0000;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-container">', unsafe_allow_html=True)
+
 st.markdown('<div class="title">🚑 Rettungsdienst Slotmaschine 🚑</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="coins">💰 Coins: {st.session_state.coins}</div>', unsafe_allow_html=True)
 
@@ -235,11 +174,8 @@ bet = st.slider("Wähle deinen Einsatz (Coins):", min_value=10, max_value=min(20
 
 spin_box = st.empty()
 
-def render_reels(reels, glow=False):
-    if glow:
-        html_reels = " ".join([f'<span class="glow">{r}</span>' for r in reels])
-    else:
-        html_reels = " ".join(reels)
+def render_reels(reels):
+    html_reels = " ".join(reels)
     spin_box.markdown(f"<div class='reels'>{html_reels}</div>", unsafe_allow_html=True)
 
 def show_coins_animation():
@@ -264,7 +200,7 @@ if st.button("🎰 Drehen!"):
         win, msg = calculate_win(bet)
         st.session_state.win = win
         st.session_state.message = msg
-        render_reels(st.session_state.reels, glow=(win > 0))
+        render_reels(st.session_state.reels)
         st.markdown(f'<div class="message">{st.session_state.message}</div>', unsafe_allow_html=True)
         if win > 0:
             st.session_state.coins += win
@@ -285,7 +221,6 @@ else:
 
 st.markdown("---")
 st.markdown("## Gewinnübersicht pro Symbol")
-
 table_html = """
 <table>
 <thead>
@@ -298,4 +233,5 @@ for sym, _, val2, val3 in SYMBOLS:
 table_html += "</tbody></table>"
 
 st.markdown(table_html, unsafe_allow_html=True)
+
 st.markdown('</div>', unsafe_allow_html=True)
