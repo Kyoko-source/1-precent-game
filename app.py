@@ -39,7 +39,6 @@ def dealer_plays():
         st.session_state.dealer_hand.append(draw_card())
 
 def end_game():
-    # Bank spielt, falls noch nicht geschehen
     if st.session_state.turn != "dealer":
         dealer_plays()
 
